@@ -189,7 +189,7 @@ extern "C" {
 				int fileExt = 0;
 				for (; char c = file.path[2 + len]; len++)
 				{
-					entry->path[len] = c == '/' ? '\\' : c;
+					entry->path[len] = c == '/' ? '\\' : tolower(c);
 					if (c == '.')
 						fileExt = len + 1;
 				}
