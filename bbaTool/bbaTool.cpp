@@ -189,7 +189,7 @@ extern "C" {
 				int fileExt = 0;
 				for (; char c = file.path[2 + len]; len++)
 				{
-					entry->path[len] = c == '/' ? '\\' : c;
+					entry->path[len] = c == '/' ? '\\' : tolower(c);
 					if (c == '.')
 						fileExt = len + 1;
 				}
@@ -639,9 +639,16 @@ skip:
 		//		demoVersion = false;
 		//}
 
+		int argumentOffset = 0;
+		int errorExitcode = 0;
+		if (argc >= 2 && strcmp(argv[1], "-err")==0) {
+			argumentOffset = 1;
+			errorExitcode = 1;
+		}
+
 		printf("\t\t\tbbaTool\nVersion: v0.4\n\n");
 
-		if (argc == 1)
+		if (argc - argumentOffset == 1)
 		{
 			printf("Usage: Drop a file or folder onto the program file!\n\n");
 
@@ -674,7 +681,12 @@ skip:
 			//	 } 
 			//}
 
-			getchar();
+			if (errorExitcode == 1) {
+				exit(errorExitcode);
+			}
+			else {
+				getchar();
+			}
 			return;
 		}
 
@@ -683,38 +695,46 @@ skip:
 		WIN32_FIND_DATA FindFileData;
 		HANDLE hFind;
 
-		hFind = FindFirstFileExA(argv[1], FindExInfoStandard, &FindFileData, FindExSearchNameMatch, NULL, 0);
+		hFind = FindFirstFileExA(argv[1 + argumentOffset], FindExInfoStandard, &FindFileData, FindExSearchNameMatch, NULL, 0);
 
 		bool noProblems = true;
 
 		if (hFind == INVALID_HANDLE_VALUE)
 		{
-			printf("Error reading %s: (%d)\n", argv[1], GetLastError());
-			getchar();
-			getchar();
+			printf("Error reading %s: (%d)\n", argv[1 + argumentOffset], GetLastError());
+			if (errorExitcode == 1) {
+				exit(errorExitcode);
+			}
+			else {
+				getchar();
+			}
 			return;
 		}
 		else
 		{
 			char *outputPath = 0;
 			if(argc > 2)
-				outputPath = argv[2];
+				outputPath = argv[2 + argumentOffset];
 			char *extractDir = 0;
 			if(argc > 3)
-				extractDir = argv[3];
+				extractDir = argv[3 + argumentOffset];
 
 			if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-				noProblems = packfile(argv[1]);
+				noProblems = packfile(argv[1 + argumentOffset]);
 			else
-				noProblems = unpackfile(argv[1], outputPath, extractDir);
+				noProblems = unpackfile(argv[1 + argumentOffset], outputPath, extractDir);
 		}
 
 		FindClose(hFind);
 
 		if (!noProblems)
 		{
-			getchar();
-			getchar();
+			if (errorExitcode == 1) {
+				exit(errorExitcode);
+			}
+			else {
+				getchar();
+			}
 		}
 	}
 
